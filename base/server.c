@@ -13,7 +13,7 @@
 
 int main(int argc, char **argv)
 {
-	int sock, new, rtval;
+	int sock, newsk, rtval;
 	int reuse = 1;
 	struct sockaddr_in addr;
 	struct sockaddr addrin;
@@ -48,8 +48,14 @@ int main(int argc, char **argv)
 
 	printf(":: Listening on port %u...\n", SERVER_PORT);
 
-	while(new = accept(sock, NULL, 0))
+	while(newsk = accept(sock, NULL, 0))
 	{
+		if(newsk == -1)
+		{
+			perror(":: accept ");
+			continue;
+		}
+
 		int pid = fork();
 		if(pid == -1)
 		{
@@ -60,9 +66,9 @@ int main(int argc, char **argv)
 		{
 			/* - parent - */
 
-			socklen_t len = sizeof(addr);
-//			memset(&addrin, 0, sizeof(addrin));
-			rtval = getpeername(new, (struct sockaddr *)&addr, &len);
+			socklen_t len = sizeof(addrin);
+			memset(&addrin, 0, sizeof(addrin));
+			rtval = getpeername(newsk, &addrin, &len);
 			if(rtval >= 0)
 			{
 				dump_addr(&addrin);
@@ -72,7 +78,7 @@ int main(int argc, char **argv)
 				perror(":: getpeername ");
 			}
 
-			close(new);
+			close(newsk);
 			continue;
 		}
 		else
