@@ -11,6 +11,59 @@
 
 #include "cs.h"
 
+int msg_loop(int sock)
+{
+	int rtval, len, pid;
+	char *buffer;
+
+	buffer = malloc(BUFFER_SIZE);
+	if(!buffer)
+	{
+		perror(":: malloc ");
+		return -1;
+	}
+
+	pid = getpid();
+
+	for(len = BUFFER_SIZE;;)
+	{
+		memset(buffer, 0, len);
+
+		rtval = recv(sock, buffer, BUFFER_SIZE, 0);
+		if(rtval == -1)
+		{
+			perror(":: recv ");
+			break;
+		}
+		else if(!rtval)
+		{
+			/*
+			 * rtval = 0, when no message recv in nonblock mode.
+			 * rtval = 0, when peer shutdown in block mode.
+			 */
+			printf(":: Peer shutdown, :(\n");
+
+			free(buffer);
+			return 0;
+		}
+		else
+		{
+			len = rtval;
+
+			printf("[%d] : %s", pid, buffer);
+
+			rtval = do_send(sock, buffer, len);
+			if(rtval == -1)
+			{
+				break;
+			}
+		}
+	}
+
+	free(buffer);
+	return -1;
+}
+
 int main(int argc, char **argv)
 {
 	int sock, newsk, rtval;
@@ -84,21 +137,16 @@ int main(int argc, char **argv)
 		}
 		else
 		{
-			close(sock);
-
-			/*
-			 * - clild -
-			 * TODO: data transfer
-			 */
-
 			printf(":: forked in child.\n");
 
-			close(newsk);
+			close(sock);
 
+			msg_loop(newsk);
+
+			close(newsk);
 			exit(EXIT_SUCCESS);
 		}
 	} while(1);
-
 
 	close(sock);
 

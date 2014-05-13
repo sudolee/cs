@@ -10,6 +10,53 @@
 
 #include "cs.h"
 
+int msg_loop(int sock)
+{
+	char *buffer;
+	int rtval, len;
+
+	buffer = malloc(BUFFER_SIZE);
+	if(!buffer)
+	{
+		perror(":: malloc ");
+		return -1;
+	}
+
+	for(len = BUFFER_SIZE;;)
+	{
+		memset(buffer, 0, len);
+
+		rtval = read(0, buffer, BUFFER_SIZE);
+		if(rtval == -1)
+		{
+			perror(":: read ");
+			break;
+		}
+
+		len = rtval;
+
+		rtval = do_send(sock, buffer, rtval);
+		if(rtval == -1)
+		{
+			break;
+		}
+
+		rtval = recv(sock, buffer, BUFFER_SIZE, 0);
+		if(rtval == -1)
+		{
+			perror(":: recv ");
+			break;
+		}
+
+		if((len > rtval) || (len = rtval))
+			;
+
+		printf("> %s", buffer);
+	}
+
+	free(buffer);
+	return -1;
+}
 
 int main(int argc, char **argv)
 {
@@ -40,9 +87,7 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	/*
-	 * TODO: data transfer
-	 */
+	msg_loop(sock);
 
 	close(sock);
 
