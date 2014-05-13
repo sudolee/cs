@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
 
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -9,7 +10,6 @@
 #include <arpa/inet.h>
 
 #include "cs.h"
-
 
 int main(int argc, char **argv)
 {
@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	rtval = listen(sock, 50);
+	rtval = listen(sock, SERVER_LISTEN_BACKLOG);
 	if(rtval == -1)
 	{
 		perror(":: listen ");
@@ -48,8 +48,9 @@ int main(int argc, char **argv)
 
 	printf(":: Listening on port %u...\n", SERVER_PORT);
 
-	while(newsk = accept(sock, NULL, 0))
+	do
 	{
+		newsk = accept(sock, NULL, 0);
 		if(newsk == -1)
 		{
 			perror(":: accept ");
@@ -83,15 +84,20 @@ int main(int argc, char **argv)
 		}
 		else
 		{
+			close(sock);
+
 			/*
 			 * - clild -
 			 * TODO: data transfer
 			 */
 
 			printf(":: forked in child.\n");
+
+			close(newsk);
+
 			exit(EXIT_SUCCESS);
 		}
-	}
+	} while(1);
 
 
 	close(sock);

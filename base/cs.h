@@ -2,6 +2,7 @@
 #define _CS_H_
 
 #define SERVER_PORT 8080
+#define SERVER_LISTEN_BACKLOG 511
 #define SERVER_ADDR "127.0.0.1"
 
 inline void dump_addr(struct sockaddr *addr)
